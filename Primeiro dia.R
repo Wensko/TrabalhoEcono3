@@ -1,6 +1,8 @@
 library(readxl)
 library(tidyr)
 library(reshape2)
+library(tidyverse)
+
 #Puxando as bases####
 
 tri_viral <- read_excel("C:/Users/awens/OneDrive - Fundacao Getulio Vargas - FGV/GV Quinto Semestre/Econo 3/trabalho/TrabalhoR/Códigos/Vacinas/Tríplice Viral - Cobertura Vacinal.xlsx",
@@ -58,11 +60,65 @@ vac.panel <- merge(hepatite.panel, polio.panel, by = c("código", "ano", "cidade
 vac.panel <- merge(vac.panel, tri_bact.panel, by = c("código", "ano", "cidade"), all = T, no.dups = T)
 vac.panel <- merge(vac.panel, tri_viral.panel, by = c("código", "ano", "cidade"), all = T, no.dups = T)
 vac.panel<- merge(vac.panel, pneumo.panel, by = c("código", "ano", "cidade"), all = T, no.dups = T)
-
 rm(list=setdiff(ls(), "vac.panel"))
-#####
+
+vac.panel$cidade <- str_remove(vac.panel$cidade,"\\\\")
+#Vamos para o IBGE####
+PIB <- read_excel("C:/Users/awens/OneDrive - Fundacao Getulio Vargas - FGV/GV Quinto Semestre/Econo 3/trabalho/TrabalhoR/Códigos/IBGE/PIB.xlsx",
+skip = 3)
+Pop <- read_excel("C:/Users/awens/OneDrive - Fundacao Getulio Vargas - FGV/GV Quinto Semestre/Econo 3/trabalho/TrabalhoR/Códigos/IBGE/Pop.xlsx",
+skip = 3)
+Pop_2007 <- read_excel("C:/Users/awens/OneDrive - Fundacao Getulio Vargas - FGV/GV Quinto Semestre/Econo 3/trabalho/TrabalhoR/Códigos/IBGE/Pop 2007.xlsx",
+skip = 3)
+Pop2010 <- read_excel("C:/Users/awens/OneDrive - Fundacao Getulio Vargas - FGV/GV Quinto Semestre/Econo 3/trabalho/TrabalhoR/Códigos/IBGE/Pop2010.xlsx",
+skip = 5)
+
+
+colnames(Pop_2007)[1] <- colnames(Pop)[1]
+
+colnames(Pop_2007)[1] <- colnames(Pop)[1]
+colnames(Pop2010)[c(1, 4)] <- c(colnames(Pop)[1], '2010')
+
+
+Pop <- merge(Pop, Pop_2007, by = "Município")
+Pop <- merge(Pop, Pop2010, by = 'Município')
+Pop <- Pop[,-c(12, 13)]
+Pop <- Pop[,c(1:3, 11,4, 5, 12, 6, 7:10)]
+pib <- merge(Pop, PIB, by = "Município")
+
+colnames(pib)[2:23] <-  paste("a", sep = "_", colnames(pib)[2:23])
+
+name <- c()
+for(i in c(2005:2015))   {
+
+  name[i-2004] <- paste("a", i, sep = "")
+}
+lista <- c()
+for (i in 2:12) {
+  lista[i-1] <- pib[i+11]/pib[i]
+}
+
+aux.pib <- data.frame(matrix(unlist(lista), ncol=length(lista), byrow=FALSE))
+colnames(aux.pib) <- name
+
+pib <- cbind(pib, aux.pib)
+coln
 
 
 
+Pop <- Pop[,-c(12, 13)]
+
+PIB <- as.data.frame(separate(PIB, col = 1, sep = -5, remove = T, into = c("cidade", "uf")))
+Pop <- as.data.frame(separate(Pop, col = 1, sep = -5, remove = T, into = c("cidade", "uf")))
+PIB$cidade <- toupper(PIB$cidade)
+Pop$cidade <- toupper(Pop$cidade)
+
+
+colnames(Pop)[3:13] <- paste("ano ", colnames(Pop)[3:13])
+
+
+
+pop.panel <- reshape(Pop, timevar = "ano", varying = list(3:13), ids = rownames(Pop) , direction = "long", sep = " ")
+colnames(pop.panel)[4] <- "pop"
 
 
