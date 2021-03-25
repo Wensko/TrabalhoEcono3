@@ -88,11 +88,24 @@ pib <- merge(Pop, PIB, by = "Município")
 
 colnames(pib)[2:23] <-  paste("a", sep = "_", colnames(pib)[2:23])
 
+
+
+
+
+pib[2:23] <- (lapply(pib[2:23], function(x) as.numeric(x)))
+
+
+
+
 name <- c()
 for(i in c(2005:2015))   {
 
   name[i-2004] <- paste("a", i, sep = "")
 }
+
+
+
+
 lista <- c()
 for (i in 2:12) {
   lista[i-1] <- pib[i+11]/pib[i]
@@ -102,23 +115,18 @@ aux.pib <- data.frame(matrix(unlist(lista), ncol=length(lista), byrow=FALSE))
 colnames(aux.pib) <- name
 
 pib <- cbind(pib, aux.pib)
-coln
+
+pib.per.capita <- pib[c(1,24:34)]
 
 
 
-Pop <- Pop[,-c(12, 13)]
-
-PIB <- as.data.frame(separate(PIB, col = 1, sep = -5, remove = T, into = c("cidade", "uf")))
-Pop <- as.data.frame(separate(Pop, col = 1, sep = -5, remove = T, into = c("cidade", "uf")))
-PIB$cidade <- toupper(PIB$cidade)
-Pop$cidade <- toupper(Pop$cidade)
+pib.per.capita <- as.data.frame(separate(pib.per.capita, col = 1, sep = -5, remove = T, into = c("cidade", "uf")))
+pib.per.capita$cidade <- toupper(pib.per.capita$cidade)
 
 
-colnames(Pop)[3:13] <- paste("ano ", colnames(Pop)[3:13])
+pib.per.capita.panel <- reshape(pib.per.capita, timevar = "ano", varying = list(3:13), ids = rownames(pib.per.capita) , direction = "long", sep = " ")
+colnames(pib.per.capita.panel)[4] <- "pib.per.capita"
 
-
-
-pop.panel <- reshape(Pop, timevar = "ano", varying = list(3:13), ids = rownames(Pop) , direction = "long", sep = " ")
-colnames(pop.panel)[4] <- "pop"
+##Finalmente####
 
 
